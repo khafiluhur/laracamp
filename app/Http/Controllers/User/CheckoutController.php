@@ -68,6 +68,8 @@ class CheckoutController extends Controller
         $user->email = $data['email'];
         $user->name = $data['name'];
         $user->occupation = $data['occupation'];
+        $user->phone = $data['phone'];
+        $user->address = $data['address'];
         $user->save();
 
         //Create Checkout
@@ -75,7 +77,7 @@ class CheckoutController extends Controller
         $this->getSnapRedirect($checkout);
 
         //Sending Email
-        Mail::to(Auth::user()->email)->send(New AfterCheckout($checkout));
+        Mail::to(Auth::user()->email)->send(new AfterCheckout($checkout));
         
         return redirect(route('checkout.success'));
     }
@@ -182,7 +184,7 @@ class CheckoutController extends Controller
         ];
 
         try {
-            $paymentUrl = \Midtrans\Snap::createTransaction($params)->redirect_url;
+            $paymentUrl = \Midtrans\Snap::createTransaction($midtrans_params)->redirect_url;
             $checkout->midtrans_url = $paymentUrl;
             $checkout->save();
 
@@ -194,7 +196,7 @@ class CheckoutController extends Controller
 
     public function midtransCallback(Request $request)
     {
-        $notif = new Midtrans\Notification();
+        $notif = $request->method() == 'POST' ? new Midtrans\Notification() : Midtrans\Transaction::status($request->order_id);
 
         $transaction_status = $notif->transaction_status;
         $fraud = $notif->fraud_status;
